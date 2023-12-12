@@ -4,36 +4,39 @@ pipeline {
             image 'mcr.microsoft.com/dotnet/core/sdk:3.1.101'
         }
     }
-    stages {
-        stage('Verify') {
+   
+      stages {
+        stage('Audit tools') {                        
             steps {
                 sh '''
+                  git version
+                  docker version
                   dotnet --list-sdks
                   dotnet --list-runtimes
                 '''
-                sh 'printenv'
-                sh 'ls -l "$WORKSPACE"'
             }
         }
         stage('Build') {
             steps {
-                sh 'dotnet build "$WORKSPACE/m4/src/Pi.Web/Pi.Web.csproj"'
+              echo "Building version: ${VERSION} with suffix: ${VERSION_RC}"
+              sh 'dotnet build -p:VersionPrefix="${VERSION}" --version-suffix "${VERSION_RC}" ./m3/src/Pi.Web/Pi.Web.csproj'
             }
         }
         stage('Unit Test') {
             steps {
-              dir("$WORKSPACE/m4/src") {
+              dir('./m3/src') {
                 sh '''
-                    dotnet test Pi.Math.Tests/Pi.Math.Tests.csproj
-                    dotnet test Pi.Runtime.Tests/Pi.Runtime.Tests.csproj
+                    dotnet test --logger "trx;LogFileName=Pi.Math.trx" Pi.Math.Tests/Pi.Math.Tests.csproj
+                    dotnet test --logger "trx;LogFileName=Pi.Runtime.trx" Pi.Runtime.Tests/Pi.Runtime.Tests.csproj
                 '''
+                mstest testResultsFile:"**/*.trx", keepLongStdio: true
               }
             }
         }
         stage('Smoke Test') {
             steps {
-              sh 'dotnet "$WORKSPACE/m4/src/Pi.Web/bin/Debug/netcoreapp3.1/Pi.Web.dll"'
+              sh 'dotnet ./m3/src/Pi.Web/bin/Debug/netcoreapp3.1/Pi.Web.dll'
             }
         }
     }
-}
+}  
