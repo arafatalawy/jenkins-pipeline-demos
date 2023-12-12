@@ -19,7 +19,8 @@ pipeline {
         stage('Build') {
             steps {
               echo "Building version: ${VERSION} with suffix: ${VERSION_RC}"
-              sh 'dotnet build -p:VersionPrefix="${VERSION}" --version-suffix "${VERSION_RC}" ./m3/src/Pi.Web/Pi.Web.csproj'
+              
+                   sh 'dotnet build "$WORKSPACE/m3/src/Pi.Web/Pi.Web.csproj"'  
             }
         }
         stage('Unit Test') {
